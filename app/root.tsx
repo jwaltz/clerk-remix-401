@@ -1,4 +1,6 @@
-import type { LinksFunction } from "@remix-run/cloudflare";
+import { ClerkApp, ClerkErrorBoundary } from "@clerk/remix";
+import { rootAuthLoader } from "@clerk/remix/ssr.server";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/cloudflare";
 import { cssBundleHref } from "@remix-run/css-bundle";
 import {
   Links,
@@ -6,14 +8,24 @@ import {
   Meta,
   Outlet,
   Scripts,
-  ScrollRestoration,
+  ScrollRestoration
 } from "@remix-run/react";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
 ];
 
-export default function App() {
+export const loader = (args: LoaderFunctionArgs) => {
+  return rootAuthLoader(args, {
+    // types added to remix.env.d.ts
+    secretKey: args.context.env.CLERK_SECRET_KEY,
+    publishableKey: args.context.env.CLERK_PUBLISHABLE_KEY,
+  });
+};
+
+export const ErrorBoundary = ClerkErrorBoundary();
+
+function App() {
   return (
     <html lang="en">
       <head>
@@ -31,3 +43,6 @@ export default function App() {
     </html>
   );
 }
+
+// Wrap your app in ClerkApp(app)
+export default ClerkApp(App);
